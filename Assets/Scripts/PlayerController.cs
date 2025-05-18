@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -8,7 +9,7 @@ public class PlayerController : MonoBehaviour
     public float speedJump;
     public float largeResSpeed;
     public bool FaceRight = true;
-    public bool jump;
+    public bool jump = false;
 
     public Transform legs;
     public LayerMask groundLayer;
@@ -52,8 +53,13 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            Debug.Log(IsGrounded());
             //Vector2 movement = new Vector2(rb.velosity.x, speedJump);
             //rb.linearVelocity = movement;
+        }
+
+        if (!IsGrounded() && !jump) {
+            ReloadScene();
         }
 
         if (Input.GetKeyDown(KeyCode.F))
@@ -112,7 +118,20 @@ public class PlayerController : MonoBehaviour
         Gizmos.DrawLine(transform.position, transform.position + Vector3.right * transform.localScale.x * distance);
     }
 
-    
+    public bool IsGrounded()
+    {
+        Collider2D checkGround = Physics2D.OverlapCircle(legs.position, 0.5f, groundLayer);
 
-    
+        if (checkGround != null)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    void ReloadScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
 }
