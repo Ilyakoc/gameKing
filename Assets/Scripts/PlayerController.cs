@@ -69,18 +69,23 @@ public class PlayerController : MonoBehaviour
                 Physics2D.queriesStartInColliders = false;
                 hit = Physics2D.Raycast(transform.position, Vector2.right * transform.localScale.x, distance);
 
-                if (hit.collider != null && hit.collider.tag == "Resource")
+                if (hit.collider != null && hit.collider.tag == "ResourceType_1")
                 {
                     hold = true;
                     speedRun /= largeResSpeed;
                     speedJump /= largeResSpeed;
                 }
+                else if (hit.collider != null && hit.collider.tag == "ResourceType_2")
+                {
+                    hold = true;
+                }
             }
             else
             {
+                //TODO
                 hold = false;
-                speedRun *= largeResSpeed;
-                speedJump *= largeResSpeed;
+                speedRun = 2;
+                speedJump = 2;
                 //������
 
                 //if (hit.collider.gameObject.GetComponent<RigidBody2D>() != null)
@@ -133,5 +138,10 @@ public class PlayerController : MonoBehaviour
     void ReloadScene()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+
     }
 }
