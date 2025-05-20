@@ -12,8 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f35e54c90896ae4a99d435eb0110296, type: 3}
   m_Name: Default
   m_EditorClassIdentifier: 
+  GroundLayer:
+    serializedVersion: 2
+    m_Bits: 8
   SnapInput: 1
   VerticalDeadZoneThreshold: 0.1
+  HorizontalDeadZoneThreshold: 0.1
   MaxSpeed: 14
   Acceleration: 120
-  Deceleration: 60
+  Deceleration: 80
+  GroundDistance: 0.12
+  JumpPower: 18
+  CrossJumpModifier: 0.7
+  JumpDeceleration: 50
+  JumpEndEarlyGravityModifier: 3
+  CoyoteTime: 0.1
+  JumpBuffer: 0.2
