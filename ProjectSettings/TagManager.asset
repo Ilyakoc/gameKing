@@ -3,10 +3,7 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags:
-  - Resource
-  - ResourceType_1
-  - ResourceType_2
+  tags: []
   layers:
   - Default
   - TransparentFX
@@ -14,8 +11,8 @@ TagManager:
   - 
   - Water
   - UI
-  - Background
-  - Resources
+  - 
+  - 
   - 
   - 
   - 
@@ -44,14 +41,26 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: background
-    uniqueID: 1266697179
+  - name: Lower Background
+    uniqueID: 3711145491
     locked: 0
-  - name: resources
-    uniqueID: 97547535
+  - name: Objects
+    uniqueID: 81935021
     locked: 0
-  - name: player
-    uniqueID: 773819319
+  - name: Player
+    uniqueID: 4039284739
+    locked: 0
+  - name: Characters
+    uniqueID: 2446257117
+    locked: 0
+  - name: Upper Background
+    uniqueID: 1538600933
+    locked: 0
+  - name: UI World
+    uniqueID: 1377607731
+    locked: 0
+  - name: UI
+    uniqueID: 1259196731
     locked: 0
   m_RenderingLayers:
   - Default
