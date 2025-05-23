@@ -15,16 +15,21 @@ MonoBehaviour:
   GroundLayer:
     serializedVersion: 2
     m_Bits: 8
+  StuffLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  ReferDistance: 0.3
+  StuffWeightModifier: {x: 0.8, y: 0.6, z: 0.35}
   SnapInput: 1
   VerticalDeadZoneThreshold: 0.1
   HorizontalDeadZoneThreshold: 0.1
-  MaxSpeed: 14
+  MaxSpeed: 10.7
   Acceleration: 120
   Deceleration: 80
   GroundDistance: 0.12
-  JumpPower: 18
+  JumpPower: 17
   CrossJumpModifier: 0.7
   JumpDeceleration: 50
-  JumpEndEarlyGravityModifier: 3
+  JumpEndEarlyGravityModifier: 2.8
   CoyoteTime: 0.1
   JumpBuffer: 0.2

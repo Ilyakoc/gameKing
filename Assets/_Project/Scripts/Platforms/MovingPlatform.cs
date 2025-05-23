@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class MovingPlatform : MonoBehaviour
 {
@@ -8,7 +7,7 @@ public class MovingPlatform : MonoBehaviour
 
     private int goalPoint;
     private Vector2 startPos;
-    private Vector2 velocity = Vector2.zero;
+    public Vector2 velocity = Vector2.zero;
 
     private void Start()
     {

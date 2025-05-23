@@ -5,6 +5,9 @@ public class ScriptableStats : ScriptableObject
 {
     [Header("LAYERS")]
     public LayerMask GroundLayer;
+    public LayerMask StuffLayer;
+    public float ReferDistance = 0.1f;
+    public Vector3 StuffWeightModifier = new Vector3(0.8f, 0.6f, 0.35f);
 
     [Header("INPUT")]
     public bool SnapInput = true;

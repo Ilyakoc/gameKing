@@ -11,11 +11,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private CapsuleCollider2D _col;
     private FrameInput _frameInput;
     private Vector2 _frameVelocity;
-    public Vector2 FrameVelocity
-    {
-        get => _frameVelocity;
-        set => _frameVelocity = value;
-    }
+    public Vector2 FrameVelocity => _frameVelocity;
     private bool _cachedQueryStartInColliders;
 
     [Header("States")]
@@ -24,8 +20,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     #region Interface
 
+    public event Action<bool> ReferedChanged;
     public event Action<bool> GroundedChanged;
-    public event Action Fell;
+    public event Action FellOff;
     public event Action Jumped;
     public Vector2 FrameInput => new Vector2(_frameInput.Horizontal, _frameInput.Vertical);
 
@@ -54,6 +51,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     {
         _frameInput = new FrameInput
         {
+            ReferDown = Input.GetKeyDown(KeyCode.F),
             JumpDown = Input.GetKeyDown(KeyCode.Space),
             JumpHeld = Input.GetKey(KeyCode.Space),
             Vertical = Input.GetAxisRaw("Vertical"),
@@ -67,6 +65,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
         }
         if (disableMove)
         {
+            _frameInput.ReferDown = false;
             _frameInput.JumpDown = false;
             _frameInput.JumpHeld = false;
             _frameInput.Vertical = 0;
@@ -78,6 +77,11 @@ public class PlayerController : MonoBehaviour, IPlayerController
             _jumpToConsume = true;
             _timeJumpWasPressed = _time;
         }
+
+        if (_frameInput.ReferDown)
+        {
+            _referToConsume = true;
+        }
     }
 
     private void FixedUpdate()
@@ -87,6 +91,8 @@ public class PlayerController : MonoBehaviour, IPlayerController
         HandleJump();
         HandleDirection();
 
+        HandleRefer();
+
         ApplyMovement();
     }
 
@@ -95,14 +101,16 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private float _frameLeftGrounded = float.MinValue;
     private bool _grounded;
 
+    private MovingPlatform followPlatform;
+
     private void CheckCollisions()
     {
         Physics2D.queriesStartInColliders = true;
 
-        Vector2 playerScale = new Vector2(Mathf.Abs(transform.localScale.x), transform.localScale.y);
-        RaycastHit2D groundHit = Physics2D.CapsuleCast(_col.bounds.center, _col.size * playerScale, _col.direction, 0, Vector2.down, _stats.GroundDistance, _stats.GroundLayer);
-        if (groundHit && groundHit.collider.tag == "Platform") transform.parent = groundHit.transform;
-        else transform.parent = null;
+        Vector2 scale = new Vector2(Mathf.Abs(transform.localScale.x), transform.localScale.y);
+        RaycastHit2D groundHit = Physics2D.CapsuleCast(_col.bounds.center, _col.size * scale, _col.direction, 0, Vector2.down, _stats.GroundDistance, _stats.GroundLayer);
+        if (groundHit && groundHit.collider.tag == "Platform") followPlatform = groundHit.transform.GetComponent<MovingPlatform>();
+        else followPlatform = null;
 
         if (_grounded && !groundHit)
         {
@@ -115,12 +123,12 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
         if (!groundHit && !CanUseCoyote && !(jumpOccursX || jumpOccursY))
         {
-            Fell?.Invoke();
-            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+            FellOffPlatform();
         }
 
         Physics2D.queriesStartInColliders = _cachedQueryStartInColliders;
     }
+
     private void SetGround(bool ground)
     {
         if (ground)
@@ -137,6 +145,12 @@ public class PlayerController : MonoBehaviour, IPlayerController
             _frameLeftGrounded = _time;
             GroundedChanged?.Invoke(_grounded);
         }
+    }
+
+    private void FellOffPlatform()
+    {
+        FellOff?.Invoke();
+        transform.position = new Vector2(0, 0);
     }
 
     #endregion
@@ -173,25 +187,25 @@ public class PlayerController : MonoBehaviour, IPlayerController
         int dirs = 0;
         if (targetFace == TargetFace.Right || _frameVelocity.x > 0 && dirs < 2)
         {
-            _frameVelocity.x = _frameVelocity.x / 1.4f + _stats.JumpPower;
+            _frameVelocity.x = _frameVelocity.x / 1.65f + _stats.JumpPower;
             jumpOccursX = true;
             dirs++;
         }
         if (targetFace == TargetFace.Left || _frameVelocity.x < 0 && dirs < 2)
         {
-            _frameVelocity.x = _frameVelocity.x / 1.4f + -_stats.JumpPower;
+            _frameVelocity.x = _frameVelocity.x / 1.65f + -_stats.JumpPower;
             jumpOccursX = true;
             dirs++;
         }
         if (targetFace == TargetFace.Top || _frameVelocity.y > 0 && dirs < 2)
         {
-            _frameVelocity.y = _frameVelocity.y / 1.4f + _stats.JumpPower;
+            _frameVelocity.y = _frameVelocity.y / 1.65f + _stats.JumpPower;
             jumpOccursY = true;
             dirs++;
         }
         if (targetFace == TargetFace.Down || _frameVelocity.y < 0 && dirs < 2)
         {
-            _frameVelocity.y = _frameVelocity.y / 1.4f + -_stats.JumpPower;
+            _frameVelocity.y = _frameVelocity.y / 1.65f + -_stats.JumpPower;
             jumpOccursY = true;
             dirs++;
         }
@@ -242,15 +256,65 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     #endregion
 
+    #region Reference
+
+    private bool _referToConsume;
+    private bool _inRefer;
+    private Stuff referStuff;
+    private Stuff.CargoWeight cargoModifier;
+
+    private void HandleRefer()
+    {
+        Physics2D.queriesStartInColliders = true;
+        Vector2 scale = new Vector2(Mathf.Abs(transform.localScale.x), transform.localScale.y);
+        if (_inRefer) scale = Vector2.zero;
+        RaycastHit2D stuffHit = Physics2D.CapsuleCast(_col.bounds.center, _col.size * scale, _col.direction, 0, Vector2.right * Mathf.Sign(transform.localScale.x), _stats.ReferDistance, _stats.StuffLayer);
+        Physics2D.queriesStartInColliders = _cachedQueryStartInColliders;
+
+        if (!_referToConsume) return;
+
+        if (stuffHit || _inRefer) ExecuteRefer(stuffHit.transform?.GetComponent<Stuff>());
+
+        _referToConsume = false;
+    }
+
+    private void ExecuteRefer(Stuff hit)
+    {
+        if (!hit) hit = referStuff;
+        _inRefer = hit.SwitchBindStuff(transform, out cargoModifier, out referStuff);
+        ReferedChanged?.Invoke(_inRefer);
+    }
+
+    #endregion
+
     private void ApplyMovement()
     {
+        float cargo;
+        switch (cargoModifier)
+        {
+            case Stuff.CargoWeight.Low:
+                cargo = _stats.StuffWeightModifier.x;
+                break;
+            case Stuff.CargoWeight.Average:
+                cargo = _stats.StuffWeightModifier.y;
+                break;
+            case Stuff.CargoWeight.High:
+                cargo = _stats.StuffWeightModifier.z;
+                break;
+            default:
+                cargo = 1;
+                break;
+        }
+
         _rb.linearVelocity = _frameVelocity;
-        if (transform.parent) _rb.linearVelocity *= 10f;
+        if (followPlatform) _rb.linearVelocity += followPlatform.velocity;
+        if (_inRefer) _rb.linearVelocity *= cargo;
     }
 }
 
 public struct FrameInput
 {
+    public bool ReferDown;
     public bool JumpDown;
     public bool JumpHeld;
     public float Vertical;
@@ -259,8 +323,10 @@ public struct FrameInput
 
 public interface IPlayerController
 {
+    public event Action<bool> ReferedChanged;
+
     public event Action<bool> GroundedChanged;
-    public event Action Fell;
+    public event Action FellOff;
 
     public event Action Jumped;
     public Vector2 FrameInput { get; }
